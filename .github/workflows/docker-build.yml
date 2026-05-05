@@ -38,7 +38,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Install Podman
         run: |
           set -euo pipefail
@@ -53,20 +58,3 @@ jobs:
           set -euo pipefail
           CONTAINER_COMMAND=podman make build
           podman image exists ffreis/runner
-
-      - name: Install Trivy
-        run: |
-          sudo apt-get install -y wget apt-transport-https gnupg
-          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
-          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee /etc/apt/sources.list.d/trivy.list
-          sudo apt-get update
-          sudo apt-get install -y trivy
-
-      - name: Scan image for vulnerabilities
-        run: |
-          podman save -o /tmp/runner.tar ffreis/runner
-          trivy image \
-            --input /tmp/runner.tar \
-            --exit-code 1 \
-            --severity HIGH,CRITICAL \
-            --format table

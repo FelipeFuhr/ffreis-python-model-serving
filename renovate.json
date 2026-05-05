@@ -1,4 +1,4 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>FelipeFuhr/ffreis-platform-standards:renovate/python"]
+  "extends": ["github>FelipeFuhr/ffreis-platform-standards:renovate/python#1b2afe64334b4aff11c7e3ebc5fa964041efa3b3"]
 }

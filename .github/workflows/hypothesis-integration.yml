@@ -17,87 +17,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
-  grpc-property-parity-pr:
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    if: ${{ github.event_name == 'pull_request' }}
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-
-      - uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
-        with:
-          enable-cache: true
-
-      - name: Install deps (dev + grpc, frozen)
-        run: |
-          set -euo pipefail
-          uv sync --frozen --extra dev --extra grpc
-
-      - name: Generate and verify gRPC stubs
-        run: |
-          set -euo pipefail
-          ./scripts/generate_grpc_stubs.sh
-          ./scripts/check_grpc_stubs.sh
-
-      - name: Run gRPC property parity tests
-        env:
-          HYPOTHESIS_MAX_EXAMPLES: "40"
-        run: |
-          set -euo pipefail
-          uv run --frozen python -m pytest -q tests/integration_tests/test_grpc_parity.py -m property
-
-      - name: Upload Hypothesis examples
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: hypothesis-examples-pr-${{ github.run_id }}
-          if-no-files-found: ignore
-          path: .hypothesis/examples/
-
-  grpc-property-parity-nightly:
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    if: ${{ github.event_name == 'pull_request' }}
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-
-      - uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
-        with:
-          enable-cache: true
-
-      - name: Install deps (dev + grpc, frozen)
-        run: |
-          set -euo pipefail
-          uv sync --frozen --extra dev --extra grpc
-
-      - name: Generate and verify gRPC stubs
-        run: |
-          set -euo pipefail
-          ./scripts/generate_grpc_stubs.sh
-          ./scripts/check_grpc_stubs.sh
-
-      - name: Run gRPC property parity tests
-        env:
-          HYPOTHESIS_MAX_EXAMPLES: "180"
-        run: |
-          set -euo pipefail
-          uv run --frozen python -m pytest -q tests/integration_tests/test_grpc_parity.py -m property
-
-      - name: Upload Hypothesis examples
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: hypothesis-examples-nightly-${{ github.run_id }}
-          if-no-files-found: ignore
-          path: .hypothesis/examples/
+  hypothesis:
+    uses: FelipeFuhr/ffreis-workflows-python/.github/workflows/python-hypothesis.yml@1ce012b023b91e4c293846af4cfd93062d36d1be
+    with:
+      python-version: "3.13"
+      uv-extras: "dev grpc"
+      test-dir: "tests/integration_tests/test_grpc_parity.py"

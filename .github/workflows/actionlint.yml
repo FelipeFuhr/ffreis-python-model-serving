@@ -1,0 +1,13 @@
+name: DevOps / Actionlint
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+jobs:
+  actionlint:
+    uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-actionlint.yml@main
+    with:
+      working-directory: .
+      fail-on-error: true

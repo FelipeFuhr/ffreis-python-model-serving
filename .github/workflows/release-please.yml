@@ -1,0 +1,10 @@
+name: DevOps / Release Please
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  release-please:
+    uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-release-please.yml@main

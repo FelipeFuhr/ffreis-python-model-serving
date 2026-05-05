@@ -10,6 +10,11 @@ PYTHON ?= python3
 VENV ?= .venv
 CONTAINER_COMMAND ?= podman
 
+GITLEAKS         ?= gitleaks
+LEFTHOOK_VERSION ?= 1.7.10
+LEFTHOOK_DIR     ?= $(CURDIR)/.bin
+LEFTHOOK_BIN     ?= $(LEFTHOOK_DIR)/lefthook
+
 PREFIX ?= ffreis
 IMAGE_PROVIDER ?=
 IMAGE_TAG ?= api-grpc-smoke
@@ -196,6 +201,16 @@ lint: fmt-check ## Run linting + static typing
 	uv run --with ruff python -m ruff check .
 	uv run --with mypy python -m mypy src
 
+.PHONY: validate
+validate: ## Static type checking (mypy)
+	uv run --with mypy python -m mypy src
+
+.PHONY: plan
+plan: ## Not applicable — use 'make validate' or 'make test' for Python repos
+	@echo "INFO: 'plan' is Terraform-specific and does not apply to Python repos."
+	@echo "      To type-check: make validate"
+	@echo "      To run tests: make test"
+
 .PHONY: test
 test: ## Run all tests
 	uv run --with pytest python -m pytest -q
@@ -235,7 +250,8 @@ smoke-api-grpc: ## Run docker-compose HTTP + gRPC smoke test
 		IMAGE_ROOT="$(IMAGE_ROOT)" IMAGE_TAG="$(IMAGE_TAG)" docker compose -f examples/docker-compose.api-grpc.yml down --remove-orphans || true; \
 	}; \
 	trap cleanup EXIT; \
-	IMAGE_ROOT="$(IMAGE_ROOT)" IMAGE_TAG="$(IMAGE_TAG)" timeout --foreground "$(SMOKE_TIMEOUT)" docker compose -f examples/docker-compose.api-grpc.yml up --build --exit-code-from smoke
+	IMAGE_ROOT="$(IMAGE_ROOT)" IMAGE_TAG="$(IMAGE_TAG)" docker compose -f examples/docker-compose.api-grpc.yml run --rm model-init; \
+	IMAGE_ROOT="$(IMAGE_ROOT)" IMAGE_TAG="$(IMAGE_TAG)" timeout --foreground "$(SMOKE_TIMEOUT)" docker compose -f examples/docker-compose.api-grpc.yml up --build --exit-code-from smoke serving-api serving-grpc smoke
 
 # ------------------------------------------------------------------------------
 # Cleaning
@@ -272,5 +288,59 @@ clean-runner: ## Remove runner image
 .PHONY: clean-all
 clean-all: clean-repo clean-base clean-base-builder clean-uv-venv clean-builder clean-base-runner clean-runner ## Clean everything
 
+.PHONY: secrets-scan-staged lefthook-bootstrap lefthook-install lefthook-run lefthook
+
+secrets-scan-staged: ## Scan staged diff for secrets
+	@command -v $(GITLEAKS) >/dev/null 2>&1 || (echo "Missing tool: $(GITLEAKS). Install: https://github.com/gitleaks/gitleaks#installing" && exit 1)
+	$(GITLEAKS) protect --staged --redact
+
+lefthook-bootstrap: ## Download lefthook binary into ./.bin
+	LEFTHOOK_VERSION="$(LEFTHOOK_VERSION)" BIN_DIR="$(LEFTHOOK_DIR)" bash ./scripts/bootstrap_lefthook.sh
+
+lefthook-install: lefthook-bootstrap ## Install git hooks (runs bootstrap first)
+	@if [ -x "$(LEFTHOOK_BIN)" ] && [ -x ".git/hooks/pre-commit" ] && [ -x ".git/hooks/pre-push" ] && [ -x ".git/hooks/commit-msg" ]; then \
+		echo "lefthook hooks already installed"; \
+		exit 0; \
+	fi
+	LEFTHOOK="$(LEFTHOOK_BIN)" "$(LEFTHOOK_BIN)" install
+
+lefthook-run: lefthook-bootstrap ## Run all hooks locally (pre-commit + commit-msg + pre-push)
+	LEFTHOOK="$(LEFTHOOK_BIN)" "$(LEFTHOOK_BIN)" run pre-commit
+	@tmp_msg="$$(mktemp)"; \
+	echo "chore(hooks): validate commit-msg hook" > "$$tmp_msg"; \
+	LEFTHOOK="$(LEFTHOOK_BIN)" "$(LEFTHOOK_BIN)" run commit-msg -- "$$tmp_msg"; \
+	rm -f "$$tmp_msg"
+	LEFTHOOK="$(LEFTHOOK_BIN)" "$(LEFTHOOK_BIN)" run pre-push
+
+lefthook: lefthook-bootstrap lefthook-install lefthook-run ## Install hooks and run them
+
 .PHONY: ci-grpc
 ci-grpc: grpc-check openapi-check lint test-grpc-parity ## Run gRPC sync + parity quality gate
+
+# ── Standard quality-system targets ──────────────────────────────────────────
+SRC_DIR  ?= src
+TEST_DIR ?= tests/unit_tests
+
+.PHONY: typecheck
+typecheck: ## Type-check with mypy
+	uv run --extra dev mypy $(SRC_DIR)
+
+.PHONY: test-all
+test-all: ## Run full test suite
+	uv run --extra dev pytest tests/
+
+.PHONY: test-property
+test-property: ## Run Hypothesis property-based tests
+	uv run --extra dev pytest -q tests/hypothesis_tests/ 2>/dev/null || \
+	  uv run --extra dev pytest -q -k "hypothesis or property" tests/ 2>/dev/null || true
+
+.PHONY: mutation-test
+mutation-test: ## Run mutation testing with mutmut (slow — run in CI)
+	uv run mutmut run --paths-to-mutate=$(SRC_DIR) --tests-dir=$(TEST_DIR) || true
+	uv run mutmut results
+
+.PHONY: clean
+clean: ## Remove caches and build artifacts
+	rm -rf $(VENV) build __pycache__ .pytest_cache .mypy_cache .ruff_cache .coverage htmlcov coverage.xml
+	find . -type d -name '__pycache__' -exec rm -r {} +
+	find . -type f -name '*.py[cod]' -delete

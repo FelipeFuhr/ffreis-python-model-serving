@@ -15,32 +15,8 @@ concurrency:
 
 jobs:
   commit-checks:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-
-      - uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
-        with:
-          enable-cache: true
-
-      - name: Install tooling (frozen)
-        run: |
-          set -euo pipefail
-          uv sync --frozen --extra dev
-
-      - name: Cache pre-commit
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/pre-commit
-          key: precommit-${{ runner.os }}-py313-${{ hashFiles('.pre-commit-config.yaml') }}
-
-      - name: Run pre-commit hooks
-        run: uv run --frozen pre-commit run --all-files --show-diff-on-failure
-
-      - name: Unit tests
-        run: uv run --frozen python -m pytest -q tests/unit_tests
+    uses: FelipeFuhr/ffreis-workflows-python/.github/workflows/python-test.yml@1ce012b023b91e4c293846af4cfd93062d36d1be
+    with:
+      python-version: "3.13"
+      uv-extras: "dev"
+      test-dir: "tests/unit_tests"

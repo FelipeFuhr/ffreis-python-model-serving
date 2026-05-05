@@ -1,0 +1,14 @@
+name: DevOps / Gitleaks
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+jobs:
+  gitleaks:
+    uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-gitleaks.yml@main
+    with:
+      working-directory: .
+      scan-history: true
+      upload-sarif: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}

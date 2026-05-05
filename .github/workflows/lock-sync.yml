@@ -15,20 +15,6 @@ concurrency:
 
 jobs:
   lock-sync:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-
-      - uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
-        with:
-          enable-cache: true
-
-      - name: Check uv.lock is up to date
-        run: |
-          set -euo pipefail
-          test -s uv.lock || (echo "uv.lock missing — run uv lock"; exit 1)
-          uv lock --check
+    uses: FelipeFuhr/ffreis-workflows-python/.github/workflows/python-lock-sync.yml@1ce012b023b91e4c293846af4cfd93062d36d1be
+    with:
+      python-version: "3.13"

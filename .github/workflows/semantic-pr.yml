@@ -1,0 +1,8 @@
+name: DevOps / Semantic PR
+
+on:
+  pull_request:
+
+jobs:
+  semantic-pr:
+    uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-semantic-pr.yml@main

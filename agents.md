@@ -216,6 +216,8 @@ CI must:
 - Use explicit exception types.
 - Provide actionable error messages.
 - Library code must not call sys.exit().
+- Do not silence errors with blanket ignores (`_ = err`, `//nolint`, `#nosec`, `@SuppressWarnings`, etc.) to work around a problem. Fix the root cause instead. Suppression is only acceptable when the error is genuinely irrelevant (e.g. a best-effort cleanup) and must include an inline comment explaining why.
+- When encountering existing error-ignore patterns during any edit, remove the suppression and fix the underlying issue unless there is a clear documented reason for it.
 
 ---
 

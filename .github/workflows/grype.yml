@@ -38,8 +38,11 @@ permissions:
 jobs:
   grype:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GRYPE_SCAN_TIMEOUT: 30m
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Install Podman
         run: |
@@ -75,14 +78,25 @@ jobs:
             name="${image##*/}"
             archive="grype-results/${name}.oci.tar"
             out="grype-results/${name}.sarif"
+            echo "[$(date -u +%FT%TZ)] exporting ${image} -> ${archive}"
 
             podman image exists "${image}"
             podman save --format oci-archive --output "${archive}" "${image}"
+            echo "[$(date -u +%FT%TZ)] scanning ${archive} -> ${out}"
 
-            ./bin/grype "oci-archive:${archive}" -o sarif --file "$out" --fail-on high
+            if ! timeout --foreground "${GRYPE_SCAN_TIMEOUT}" \
+              ./bin/grype "oci-archive:${archive}" -o sarif --file "$out" --fail-on high; then
+              rc=$?
+              if [ "$rc" -eq 124 ]; then
+                echo "::error::Grype scan timed out for ${image} after ${GRYPE_SCAN_TIMEOUT}."
+              fi
+              exit "$rc"
+            fi
 
             test -s "$out"
+            echo "[$(date -u +%FT%TZ)] completed ${image}"
           done
+          echo "[$(date -u +%FT%TZ)] all image scans completed"
 
       - name: Upload Grype SARIF (per image)
         if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}

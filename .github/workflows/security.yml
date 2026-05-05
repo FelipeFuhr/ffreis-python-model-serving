@@ -1,0 +1,24 @@
+name: Code Security (Dependency Audit)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 9 * * 1" # Mondays 09:00 UTC
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deps-security:
+    uses: FelipeFuhr/ffreis-workflows-python/.github/workflows/python-security.yml@1ce012b023b91e4c293846af4cfd93062d36d1be
+    with:
+      python-version: "3.13"
+      uv-extras: "dev"

@@ -1,0 +1,15 @@
+name: DevOps / Labeler
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  labeler:
+    uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-labeler.yml@main
+    with:
+      rules-json: |-
+        [
+          {"label": "ci", "title": "/ci/i"},
+          {"label": "infra", "title": "/infra/i"}
+        ]

@@ -1,0 +1,45 @@
+name: DevOps / PR Hygiene
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  semantic-pr:
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+    uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-semantic-pr.yml@main
+
+  actionlint:
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+    uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-actionlint.yml@main
+    with:
+      working-directory: "."
+
+  labeler:
+    if: github.event_name == 'pull_request_target'
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-labeler.yml@main
+    with:
+      rules-json: |-
+        [
+          {"label":"ci","patterns":[".github/workflows/**",".github/actions/**"]},
+          {"label":"python","patterns":["**/*.py","pyproject.toml","poetry.lock","requirements*.txt"]},
+          {"label":"docker","patterns":["Dockerfile","Containerfile","docker/**",".docker/**"]},
+          {"label":"docs","patterns":["**/*.md"]}
+        ]

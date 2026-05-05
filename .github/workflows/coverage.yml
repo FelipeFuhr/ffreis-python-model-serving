@@ -31,29 +31,9 @@ concurrency:
 
 jobs:
   coverage:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-
-      - uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
-        with:
-          enable-cache: true
-
-      - name: Generate coverage
-        run: |
-          set -euo pipefail
-          uv sync --frozen --extra dev --extra grpc
-          ./scripts/generate_grpc_stubs.sh
-          uv run --frozen pytest -q --cov=src --cov-report=term --cov-report=xml:coverage.xml
-          test -s coverage.xml
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
-        with:
-          files: ./coverage.xml
-          fail_ci_if_error: false
-          verbose: true
+    uses: FelipeFuhr/ffreis-workflows-python/.github/workflows/python-coverage.yml@1ce012b023b91e4c293846af4cfd93062d36d1be
+    with:
+      python-version: "3.13"
+      uv-extras: "dev grpc"
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

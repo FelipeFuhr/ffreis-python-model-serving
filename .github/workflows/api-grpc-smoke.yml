@@ -9,12 +9,15 @@ on:
 jobs:
   api-grpc-smoke:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
       - name: Build and run compose smoke test
         run: |
-          docker compose -f examples/docker-compose.api-grpc.yml up --build --exit-code-from smoke
+          set -euo pipefail
+          docker compose -f examples/docker-compose.api-grpc.yml run --rm model-init
+          docker compose -f examples/docker-compose.api-grpc.yml up --build --exit-code-from smoke serving-api serving-grpc smoke
 
       - name: Tear down compose stack
         if: always()

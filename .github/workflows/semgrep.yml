@@ -1,0 +1,20 @@
+name: Semgrep (SAST)
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 8 * * 1"  # Mondays 08:00 UTC
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    uses: FelipeFuhr/ffreis-workflows-python/.github/workflows/python-semgrep.yml@1ce012b023b91e4c293846af4cfd93062d36d1be

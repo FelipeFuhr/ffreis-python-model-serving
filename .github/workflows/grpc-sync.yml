@@ -9,31 +9,14 @@ on:
 
 jobs:
   grpc-sync-and-parity:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
-        with:
-          enable-cache: true
-
-      - name: Install dependencies (uv)
-        run: |
-          set -euo pipefail
-          uv sync --frozen --extra dev --extra grpc
-
-      - name: Check generated gRPC stubs are current
-        run: |
-          set -euo pipefail
-          ./scripts/check_grpc_stubs.sh
-
-      - name: Run gRPC/API parity test
-        run: |
-          set -euo pipefail
-          uv run --frozen pytest -q tests/integration_tests/test_grpc_parity.py
+    uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-run-commands.yml@main
+    with:
+      setup-python: true
+      python-version: "3.13"
+      setup-uv: true
+      timeout-minutes: 30
+      commands: |-
+        set -euo pipefail
+        uv sync --frozen --extra dev --extra grpc
+        ./scripts/check_grpc_stubs.sh
+        uv run --frozen pytest -q tests/integration_tests/test_grpc_parity.py

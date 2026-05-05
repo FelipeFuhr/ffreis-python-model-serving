@@ -1,0 +1,13 @@
+name: DevOps / ShellCheck
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+jobs:
+  shellcheck:
+    uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-shellcheck.yml@main
+    with:
+      working-directory: .
+      fail-on-error: true

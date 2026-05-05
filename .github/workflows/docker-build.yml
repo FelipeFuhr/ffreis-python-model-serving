@@ -36,8 +36,9 @@ permissions:
 jobs:
   build-images:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Install Podman
         run: |
           set -euo pipefail
@@ -52,3 +53,20 @@ jobs:
           set -euo pipefail
           CONTAINER_COMMAND=podman make build
           podman image exists ffreis/runner
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get install -y wget apt-transport-https gnupg
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install -y trivy
+
+      - name: Scan image for vulnerabilities
+        run: |
+          podman save -o /tmp/runner.tar ffreis/runner
+          trivy image \
+            --input /tmp/runner.tar \
+            --exit-code 1 \
+            --severity HIGH,CRITICAL \
+            --format table

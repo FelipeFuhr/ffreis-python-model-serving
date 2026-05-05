@@ -1,0 +1,66 @@
+title = "gitleaks config"
+
+# Extend the built-in ruleset — catches AWS keys, GitHub tokens, private keys,
+# API keys, and hundreds of other known patterns out of the box.
+[extend]
+useDefault = true
+
+# ── Additional rules ──────────────────────────────────────────────────────────
+
+# Real AWS account IDs embedded in ARN strings.
+# Informational severity — ARNs identify infrastructure but are not credentials.
+[[rules]]
+id          = "aws-account-id-in-arn"
+description = "AWS Account ID embedded in an ARN"
+regex       = 'arn:aws:[a-z0-9\-]+:[a-z0-9\-]*:(\d{12}):'
+tags        = ["aws", "arn", "account-id"]
+severity    = "info"
+
+  [rules.allowlist]
+  description = "Well-known placeholder account IDs used in documentation"
+  regexes = [
+    'arn:aws:[a-z0-9\-]+:[a-z0-9\-]*:123456789012:',
+    'arn:aws:[a-z0-9\-]+:[a-z0-9\-]*:000000000000:',
+    'arn:aws:[a-z0-9\-]+:[a-z0-9\-]*:111111111111:',
+    'arn:aws:[a-z0-9\-]+:[a-z0-9\-]*:999999999999:',
+  ]
+
+# ── Global allowlist (combined — gitleaks requires a single [allowlist] map) ─
+[allowlist]
+description = "Template placeholders, docs, fixtures, lock files, generated code"
+regexes = [
+  'YOUR_[A-Z_]+',
+  'REPLACE_ME',
+  '<[A-Z_]+>',
+  'example\.com',
+  '123456789012',
+  '000000000000',
+  '111111111111',
+  '999999999999',
+]
+paths = [
+  '.*_test\.go$',
+  '.*_test\.py$',
+  '.*test_.*\.py$',
+  'tests?/.*',
+  '.*fixtures?/.*',
+  '.*testdata/.*',
+  '.*examples?/.*',
+  '.*\.example$',
+  '.*\.sample$',
+  '.*\.md$',
+  '.*\.txt$',
+  '.*\.rst$',
+  'docs/.*',
+  'uv\.lock',
+  'poetry\.lock',
+  'Cargo\.lock',
+  'go\.sum',
+  'package-lock\.json',
+  'yarn\.lock',
+  'Pipfile\.lock',
+  '.*_pb2\.py$',
+  '.*_pb2_grpc\.py$',
+  '.*\.pb\.go$',
+  '.*\.pb\.rs$',
+]

@@ -1,0 +1,14 @@
+name: DevOps / Scorecard
+
+on:
+  schedule:
+    - cron: "0 3 * * 0"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  scorecard:
+    uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-scorecard.yml@main
+    with:
+      upload-sarif: true

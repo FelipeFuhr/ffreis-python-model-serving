@@ -11,5 +11,4 @@ concurrency:
 
 jobs:
   release-please:
-    timeout-minutes: 30
     uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-release-please.yml@main

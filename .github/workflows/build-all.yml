@@ -31,7 +31,6 @@ permissions:
 
 jobs:
   matrix-build:
-    timeout-minutes: 30
     uses: FelipeFuhr/ffreis-workflows-python/.github/workflows/python-build.yml@1ce012b023b91e4c293846af4cfd93062d36d1be
     with:
       python-versions: '["3.13"]'

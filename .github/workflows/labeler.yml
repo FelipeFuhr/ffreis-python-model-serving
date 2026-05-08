@@ -6,7 +6,6 @@ on:
 
 jobs:
   labeler:
-    timeout-minutes: 15
     uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-labeler.yml@main
     with:
       rules-json: |-

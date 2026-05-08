@@ -31,7 +31,6 @@ concurrency:
 
 jobs:
   coverage:
-    timeout-minutes: 30
     if: ${{ !github.event.pull_request.draft }}
     uses: FelipeFuhr/ffreis-workflows-python/.github/workflows/python-coverage.yml@1ce012b023b91e4c293846af4cfd93062d36d1be
     with:

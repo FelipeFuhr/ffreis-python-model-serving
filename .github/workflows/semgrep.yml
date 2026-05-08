@@ -17,5 +17,4 @@ permissions:
 
 jobs:
   semgrep:
-    timeout-minutes: 30
     uses: FelipeFuhr/ffreis-workflows-python/.github/workflows/python-semgrep.yml@1ce012b023b91e4c293846af4cfd93062d36d1be

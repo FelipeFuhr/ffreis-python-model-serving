@@ -11,7 +11,6 @@ concurrency:
 
 jobs:
   actionlint:
-    timeout-minutes: 15
     uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-actionlint.yml@main
     with:
       working-directory: .

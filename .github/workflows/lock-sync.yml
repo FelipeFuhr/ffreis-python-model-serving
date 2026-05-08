@@ -15,7 +15,6 @@ concurrency:
 
 jobs:
   lock-sync:
-    timeout-minutes: 15
     uses: FelipeFuhr/ffreis-workflows-python/.github/workflows/python-lock-sync.yml@1ce012b023b91e4c293846af4cfd93062d36d1be
     with:
       python-version: "3.13"

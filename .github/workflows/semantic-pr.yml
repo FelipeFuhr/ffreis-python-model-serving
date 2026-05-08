@@ -3,6 +3,10 @@ name: DevOps / Semantic PR
 on:
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   semantic-pr:
     uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-semantic-pr.yml@main

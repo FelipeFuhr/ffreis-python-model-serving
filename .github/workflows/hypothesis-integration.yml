@@ -2,8 +2,13 @@ name: Hypothesis Integration
 
 on:
   workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual run (optional)"
+        required: false
+        type: string
   schedule:
-    - cron: "30 10 * * 1"
+    - cron: "0 2 1 * *"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -20,3 +25,24 @@ jobs:
       python-version: "3.13"
       uv-extras: "dev grpc"
       test-dir: "tests/integration_tests/test_grpc_parity.py"
+
+  notify-failure:
+    needs: [hypothesis]
+    if: failure()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `⚠️ [CI] ${context.workflow} failed (${new Date().toISOString().split('T')[0]})`,
+              body: [
+                `**Workflow:** ${context.workflow}`,
+                `**Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              ].join('\n'),
+            });

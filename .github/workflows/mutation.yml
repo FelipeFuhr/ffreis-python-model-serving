@@ -2,8 +2,13 @@ name: Mutation Testing (mutmut)
 
 on:
   workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual run (optional)"
+        required: false
+        type: string
   schedule:
-    - cron: "0 2 * * 0" # Sundays 02:00 UTC
+    - cron: "0 2 1 * *"   # 1st of every month, 02:00 UTC
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -21,3 +26,24 @@ jobs:
       uv-extras: "dev"
       paths-to-mutate: "src"
       threshold: 70
+
+  notify-failure:
+    needs: [mutation]
+    if: failure()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `⚠️ [CI] ${context.workflow} failed (${new Date().toISOString().split('T')[0]})`,
+              body: [
+                `**Workflow:** ${context.workflow}`,
+                `**Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              ].join('\n'),
+            });

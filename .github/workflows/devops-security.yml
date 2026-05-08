@@ -37,6 +37,7 @@ jobs:
       upload-sarif: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}
 
   codeql:
+    if: ${{ github.event_name != 'pull_request' }}
     permissions:
       actions: read
       contents: read

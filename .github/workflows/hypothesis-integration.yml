@@ -2,14 +2,6 @@ name: Hypothesis Integration
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches: [ main ]
-    paths:
-      - "tests/integration_tests/test_grpc_parity.py"
-      - "pyproject.toml"
-      - "uv.lock"
-      - "Makefile"
-      - ".github/workflows/hypothesis-integration.yml"
   schedule:
     - cron: "30 10 * * 1"
 

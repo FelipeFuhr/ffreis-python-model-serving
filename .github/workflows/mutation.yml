@@ -2,22 +2,6 @@ name: Mutation Testing (mutmut)
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches: [main]
-    paths:
-      - "src/**"
-      - "tests/**"
-      - "pyproject.toml"
-      - "uv.lock"
-      - ".github/workflows/mutation.yml"
-  push:
-    branches: [main]
-    paths:
-      - "src/**"
-      - "tests/**"
-      - "pyproject.toml"
-      - "uv.lock"
-      - ".github/workflows/mutation.yml"
   schedule:
     - cron: "0 2 * * 0" # Sundays 02:00 UTC
 

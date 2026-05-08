@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   grpc-sync-and-parity:
+    timeout-minutes: 15
     uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-run-commands.yml@main
     with:
       setup-python: true

@@ -15,12 +15,14 @@ permissions:
 
 jobs:
   semantic-pr:
+    timeout-minutes: 15
     if: github.event_name == 'pull_request'
     permissions:
       contents: read
     uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-semantic-pr.yml@main
 
   actionlint:
+    timeout-minutes: 15
     if: github.event_name == 'pull_request'
     permissions:
       contents: read
@@ -29,6 +31,7 @@ jobs:
       working-directory: "."
 
   labeler:
+    timeout-minutes: 15
     if: github.event_name == 'pull_request_target'
     permissions:
       contents: read

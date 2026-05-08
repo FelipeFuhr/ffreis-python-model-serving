@@ -16,6 +16,7 @@ permissions:
 
 jobs:
   gitleaks:
+    timeout-minutes: 30
     permissions:
       contents: read
       actions: read
@@ -27,6 +28,7 @@ jobs:
       upload-sarif: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}
 
   osv:
+    timeout-minutes: 30
     permissions:
       contents: read
       actions: read
@@ -37,6 +39,7 @@ jobs:
       upload-sarif: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}
 
   codeql:
+    timeout-minutes: 30
     permissions:
       actions: read
       contents: read

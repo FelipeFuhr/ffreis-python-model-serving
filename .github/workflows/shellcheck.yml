@@ -11,6 +11,7 @@ concurrency:
 
 jobs:
   shellcheck:
+    timeout-minutes: 15
     uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-shellcheck.yml@main
     with:
       working-directory: .

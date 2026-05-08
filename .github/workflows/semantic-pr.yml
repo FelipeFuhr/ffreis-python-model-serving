@@ -9,4 +9,5 @@ concurrency:
 
 jobs:
   semantic-pr:
+    timeout-minutes: 15
     uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-semantic-pr.yml@main

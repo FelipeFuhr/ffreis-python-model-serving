@@ -9,10 +9,11 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   scorecard:
+    timeout-minutes: 15
     uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-scorecard.yml@main
     with:
       upload-sarif: true

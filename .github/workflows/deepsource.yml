@@ -32,6 +32,7 @@ concurrency:
 
 jobs:
   deepsource:
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     env:
       DEEPSOURCE_DSN: ${{ secrets.DEEPSOURCE_DSN }}

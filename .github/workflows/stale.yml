@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   stale:
+    timeout-minutes: 15
     uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-stale.yml@main
     with:
       only: "both"

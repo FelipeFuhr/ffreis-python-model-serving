@@ -66,3 +66,6 @@ htmlcov/
 *.swo
 *~
 .DS_Store
+
+scripts/hooks/
+scripts/bootstrap_lefthook.sh

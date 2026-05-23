@@ -25,7 +25,7 @@ jobs:
       python-version: "3.13"
       uv-extras: "dev"
       paths-to-mutate: "src"
-      threshold: 70
+      threshold: 80
 
   notify-failure:
     needs: [mutation]

@@ -66,3 +66,7 @@ htmlcov/
 *.swo
 *~
 .DS_Store
+
+# Lefthook bootstrap (fetched from platform-standards on install)
+scripts/hooks/
+scripts/bootstrap_lefthook.sh

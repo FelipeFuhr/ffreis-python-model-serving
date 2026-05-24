@@ -29,6 +29,8 @@ concurrency:
 jobs:
   matrix-build:
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
 
     strategy:
       fail-fast: false

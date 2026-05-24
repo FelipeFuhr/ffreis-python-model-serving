@@ -22,6 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     if: ${{ github.event_name == 'pull_request' }}
+    permissions:
+      contents: read
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -69,6 +71,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     if: ${{ github.event_name == 'pull_request' }}
+    permissions:
+      contents: read
 
     steps:
       - name: Harden the runner (Audit all outbound calls)

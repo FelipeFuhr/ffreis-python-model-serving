@@ -23,9 +23,6 @@ on:
       - ".deepsource.toml"
       - ".github/workflows/deepsource.yml"
 
-permissions:
-  contents: read
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -33,6 +30,8 @@ concurrency:
 jobs:
   deepsource:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       DEEPSOURCE_DSN: ${{ secrets.DEEPSOURCE_DSN }}
 

@@ -1,5 +1,5 @@
 ARG BASE_IMAGE=ffreis/base
-FROM ghcr.io/astral-sh/uv:0.11.16 AS uv
+FROM ghcr.io/astral-sh/uv:0.11.17 AS uv
 
 FROM ${BASE_IMAGE}
 

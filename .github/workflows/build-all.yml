@@ -2,6 +2,7 @@ name: Build All (Python)
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [ main ]
     paths:
       - "src/**"
@@ -28,6 +29,7 @@ concurrency:
 
 jobs:
   matrix-build:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read

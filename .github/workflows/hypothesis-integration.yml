@@ -3,6 +3,7 @@ name: Hypothesis Integration
 on:
   workflow_dispatch:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [ main ]
     paths:
       - "tests/integration_tests/test_grpc_parity.py"

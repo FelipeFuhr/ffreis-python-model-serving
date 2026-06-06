@@ -65,13 +65,14 @@ jobs:
           set -euo pipefail
           PINNED_COMMIT="c6a67581ab4e7aa494351b919326ad6606af3010"
           SCRIPT_URL="https://raw.githubusercontent.com/anchore/grype/${PINNED_COMMIT}/install.sh"
-          mkdir -p ./bin
+          _grype_tmp="$(mktemp -d)"
           curl --fail --show-error --silent --location \
             --proto '=https' --proto-redir '=https' \
             "$SCRIPT_URL" -o /tmp/grype-install.sh
           grep -q "grype" /tmp/grype-install.sh
-          sh /tmp/grype-install.sh -b ./bin
-          ./bin/grype version
+          sh /tmp/grype-install.sh -b "$_grype_tmp" v0.114.0
+          sudo install -m 0755 "$_grype_tmp/grype" /usr/local/bin/grype
+          grype version
 
       - name: Grype scan (SARIF)
         run: |
@@ -87,7 +88,7 @@ jobs:
             podman image exists "${image}"
             podman save --format oci-archive --output "${archive}" "${image}"
 
-            ./bin/grype "oci-archive:${archive}" -o sarif --file "$out" --fail-on high
+            grype "oci-archive:${archive}" -o sarif --file "$out" --fail-on high
 
             test -s "$out"
           done

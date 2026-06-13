@@ -32,6 +32,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   grype:
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
@@ -110,10 +112,10 @@ jobs:
             sarif_payload="$(gzip -c "$f" | base64 | tr -d '\n')"
             if ! response="$(gh api \
               -X POST \
-              /repos/${{ github.repository }}/code-scanning/sarifs \
+              "/repos/${GH_REPO}/code-scanning/sarifs" \
               -f sarif="${sarif_payload}" \
-              -f commit_sha="${{ github.sha }}" \
-              -f ref="${{ github.ref }}" 2>&1)"; then
+              -f commit_sha="${GH_SHA}" \
+              -f ref="${GH_REF}" 2>&1)"; then
               failures=$((failures + 1))
               echo "::warning title=Grype SARIF upload failed::${f}: ${response}"
               continue
@@ -125,3 +127,6 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          GH_SHA: ${{ github.sha }}
+          GH_REF: ${{ github.ref }}

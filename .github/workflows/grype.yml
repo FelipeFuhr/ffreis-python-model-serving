@@ -1,5 +1,7 @@
 name: Container Vulnerability Scan (Grype)
 
+permissions: {}
+
 on:
   workflow_dispatch:
   pull_request:

@@ -1,5 +1,7 @@
 name: Build All (Python)
 
+permissions: {}
+
 on:
   workflow_dispatch:
     inputs:

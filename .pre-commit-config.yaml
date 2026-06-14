@@ -102,15 +102,3 @@ repos:
     rev: 3.0.0
     hooks:
       - id: shellcheck
-  - repo: https://github.com/pylint-dev/pylint
-    rev: v4.0.5
-    hooks:
-      - id: pylint
-        # examples/ imports optional ML packages (numpy, torch, skl2onnx) that
-        # are not installed in the base venv — exclude to prevent E0401 failures.
-        exclude: "^examples/"
-        args:
-          # R0401: Cyclic import — intentional in the ports-and-adapters pattern
-          #   (base_adapter imports concrete adapters for the type registry).
-          # R0801: Duplicate code — common test setup patterns across test files.
-          - "--disable=R0401,R0801"

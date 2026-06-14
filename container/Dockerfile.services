@@ -20,8 +20,14 @@ COPY scripts /app/scripts
 COPY src /app/src
 COPY examples /app/examples
 
-RUN uv venv "${VIRTUAL_ENV}" --python 3.13 \
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* \
+    && uv venv "${VIRTUAL_ENV}" --python 3.13 \
     && ./scripts/generate_grpc_stubs.sh \
-    && uv sync --active --frozen --extra dev --extra grpc
+    && uv sync --active --frozen --extra dev --extra grpc \
+    && useradd --uid 1000 --create-home appuser \
+    && chown -R appuser:appuser /app /opt/venv
+USER appuser
 
 CMD ["python", "-m", "onnx_model_serving.grpc.server", "--host", "0.0.0.0", "--port", "50052"]

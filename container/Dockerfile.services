@@ -5,6 +5,7 @@ FROM python:3.14-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_LINK_MODE=copy \
+    UV_PYTHON_INSTALL_DIR=/opt/uv-python \
     VIRTUAL_ENV=/opt/venv \
     PATH="/opt/venv/bin:${PATH}" \
     PYTHONPATH=/app/src
@@ -27,7 +28,7 @@ RUN apt-get update \
     && ./scripts/generate_grpc_stubs.sh \
     && uv sync --active --frozen --extra dev --extra grpc \
     && useradd --uid 1000 --create-home appuser \
-    && chown -R appuser:appuser /app /opt/venv
+    && chown -R appuser:appuser /app /opt/venv /opt/uv-python
 USER appuser
 
 CMD ["python", "-m", "onnx_model_serving.grpc.server", "--host", "0.0.0.0", "--port", "50052"]

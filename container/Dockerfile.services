@@ -28,7 +28,8 @@ RUN apt-get update \
     && ./scripts/generate_grpc_stubs.sh \
     && uv sync --active --frozen --extra dev --extra grpc \
     && useradd --uid 1000 --create-home appuser \
-    && chown -R appuser:appuser /app /opt/venv /opt/uv-python
+    && mkdir -p /models \
+    && chown -R appuser:appuser /app /opt/venv /opt/uv-python /models
 USER appuser
 
 CMD ["python", "-m", "onnx_model_serving.grpc.server", "--host", "0.0.0.0", "--port", "50052"]

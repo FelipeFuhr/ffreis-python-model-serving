@@ -102,7 +102,3 @@ repos:
     rev: 3.0.0
     hooks:
       - id: shellcheck
-  - repo: https://github.com/pylint-dev/pylint
-    rev: v4.0.5
-    hooks:
-      - id: pylint

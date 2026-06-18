@@ -198,15 +198,15 @@ lint: fmt-check ## Run linting + static typing
 
 .PHONY: test
 test: ## Run all tests
-	uv run --with pytest python -m pytest -q
+	uv run --extra dev python -m pytest -q
 
 .PHONY: test-unit
 test-unit: ## Run unit tests
-	uv run --with pytest python -m pytest -q tests/unit_tests
+	uv run --extra dev python -m pytest -q tests/unit_tests
 
 .PHONY: test-integration
 test-integration: ## Run integration tests
-	uv run --with pytest python -m pytest -q tests/integration_tests
+	uv run --extra dev python -m pytest -q tests/integration_tests
 
 .PHONY: test-e2e
 test-e2e: ## Run e2e tests

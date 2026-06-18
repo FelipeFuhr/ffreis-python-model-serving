@@ -1,0 +1,29 @@
+name: DevOps / Secrets
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main, master, develop]
+  schedule:
+    - cron: "0 5 25-31 * 0" # last Sunday of month, 05:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-gitleaks.yml@6c0f6ec2fa4d3f83f2be03142b101b9e71e158b4
+    with:
+      working-directory: "."
+      scan-history: true
+      upload-sarif: false

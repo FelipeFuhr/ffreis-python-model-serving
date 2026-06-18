@@ -1,7 +1,10 @@
 name: Commit Checks (pre-commit)
 
+permissions: {}
+
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [ main ]
   push:
     branches: [ main ]
@@ -12,7 +15,9 @@ concurrency:
 
 jobs:
   commit-checks:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
 

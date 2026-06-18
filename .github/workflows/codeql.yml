@@ -11,19 +11,29 @@
 #
 name: "CodeQL"
 
+permissions: {}
+
 on:
   push:
     branches: ["main"]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     # The branches below must be a subset of the branches above
     branches: ["main"]
   schedule:
-    - cron: "0 0 * * 1"
+    - cron: "47 12 3 * *"  # monthly scattered (was: 0 0 * * 1)
+
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   analyze:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     name: Analyze
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       actions: read
       contents: read
@@ -32,7 +42,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ["python", "ruby"]
+        language: ["python"]
         # CodeQL supports [ $supported-codeql-languages ]
         # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
 

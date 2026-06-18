@@ -1,8 +1,11 @@
 name: Hypothesis Integration
 
+permissions: {}
+
 on:
   workflow_dispatch:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [ main ]
     paths:
       - "tests/integration_tests/test_grpc_parity.py"
@@ -11,7 +14,7 @@ on:
       - "Makefile"
       - ".github/workflows/hypothesis-integration.yml"
   schedule:
-    - cron: "30 10 * * 1"
+    - cron: "54 1 13 * *"  # monthly scattered (was: 30 10 * * 1)
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -20,7 +23,7 @@ concurrency:
 jobs:
   grpc-property-parity-pr:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
     if: ${{ github.event_name == 'pull_request' }}
     permissions:
       contents: read
@@ -69,7 +72,7 @@ jobs:
 
   grpc-property-parity-nightly:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
     if: ${{ github.event_name == 'pull_request' }}
     permissions:
       contents: read

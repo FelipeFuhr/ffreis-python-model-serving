@@ -1,7 +1,16 @@
 name: Build All (Python)
 
+permissions: {}
+
 on:
+  workflow_dispatch:
+    inputs:
+      build_macos:
+        description: "Also build on macOS (10x Actions billing — manual cross-platform check only)"
+        type: boolean
+        default: false
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [ main ]
     paths:
       - "src/**"
@@ -28,6 +37,7 @@ concurrency:
 
 jobs:
   matrix-build:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
@@ -36,7 +46,12 @@ jobs:
       fail-fast: false
       matrix:
         python: ["3.13"]
-        os: [ubuntu-latest, macos-latest]
+      # COST GUARD: macOS Actions minutes bill 10x and every artifact here is
+      # Linux-only (arm64 Lambdas / Linux containers), so macOS is OFF in the
+      # normal push/PR/schedule flow. It runs ONLY via manual workflow_dispatch
+      # with build_macos=true. Do NOT hardcode "macos-latest" back here — that
+      # silently restores the 10x drain on every run (CI cost incident 2026-06).
+        os: ${{ fromJson( (github.event_name == 'workflow_dispatch' && inputs.build_macos) && '["ubuntu-latest","macos-latest"]' || '["ubuntu-latest"]' ) }}
 
     steps:
       - name: Harden the runner (Audit all outbound calls)

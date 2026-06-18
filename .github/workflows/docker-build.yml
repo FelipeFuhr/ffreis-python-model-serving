@@ -1,5 +1,7 @@
 name: Docker Build
 
+permissions: {}
+
 on:
   push:
     branches: [ main ]
@@ -14,6 +16,7 @@ on:
       - "Makefile"
       - ".github/workflows/docker-build.yml"
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [ main ]
     paths:
       - "src/**"
@@ -32,8 +35,9 @@ concurrency:
 
 jobs:
   build-images:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:

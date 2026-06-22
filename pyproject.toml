@@ -64,6 +64,18 @@ torch = [
 tensorflow = [
     "tensorflow>=2.19.0",
 ]
+registry = [
+    "ml_registry>=0.1.0",
+]
+
+[tool.uv.sources]
+# ffreis-ml-registry is unpublished; resolve the optional extra from the sibling
+# checkout. The default install does not require this group, so the serving
+# container can be built without the sibling repo present.
+# NOTE: path is relative to the canonical checkout location. When working from a
+# git worktree at a different path, uv resolves this against the project root
+# in the workspace (where pyproject.toml lives), not the worktree CWD.
+ml_registry = { path = "/media/ffreis/second/projects/ml/ffreis-ml-registry", editable = true }
 
 [build-system]
 requires = ["hatchling"]
@@ -113,6 +125,18 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["yaml", "yaml.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# ml_registry is an optional extra (unpublished sibling); only imported when
+# MODEL_REGISTRY_BACKEND is set, so allow missing stubs at the import boundary.
+module = ["ml_registry", "ml_registry.*"]
+ignore_missing_imports = true
+
+[tool.pylint.messages-control]
+# E0401 (import-error) fires when pylint runs outside the project venv, which
+# is the pre-commit default. All project dependencies are installed in the venv;
+# suppress this check globally rather than list every dep individually.
+disable = ["import-error"]
 
 [tool.coverage.run]
 branch = true

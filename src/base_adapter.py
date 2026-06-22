@@ -54,6 +54,7 @@ def _missing_extra_runtime_error(extra: str, module_name: str) -> RuntimeError:
 
 
 def _build_onnx_adapter(settings: Settings) -> BaseAdapter:
+    # pylint: disable-next=import-outside-toplevel
     from onnx_adapter import OnnxAdapter
 
     try:
@@ -65,6 +66,7 @@ def _build_onnx_adapter(settings: Settings) -> BaseAdapter:
 
 
 def _build_sklearn_adapter(settings: Settings) -> BaseAdapter:
+    # pylint: disable-next=import-outside-toplevel
     from sklearn_adapter import SklearnAdapter
 
     try:
@@ -76,6 +78,7 @@ def _build_sklearn_adapter(settings: Settings) -> BaseAdapter:
 
 
 def _build_pytorch_adapter(settings: Settings) -> BaseAdapter:
+    # pylint: disable-next=import-outside-toplevel
     from pytorch_adapter import PytorchAdapter
 
     try:
@@ -87,6 +90,7 @@ def _build_pytorch_adapter(settings: Settings) -> BaseAdapter:
 
 
 def _build_tensorflow_adapter(settings: Settings) -> BaseAdapter:
+    # pylint: disable-next=import-outside-toplevel
     from tensorflow_adapter import TensorflowAdapter
 
     try:
@@ -120,6 +124,7 @@ def _validated_model_type(settings: Settings) -> str | None:
     return model_type
 
 
+# pylint: disable-next=too-many-return-statements
 def _infer_model_type_from_filename(settings: Settings) -> str | None:
     model_filename = settings.model_filename.strip()
     if not model_filename:
@@ -169,6 +174,12 @@ def _infer_model_type_from_defaults(settings: Settings) -> str | None:
 def load_adapter(settings: Settings) -> BaseAdapter:
     """Instantiate the appropriate adapter for current settings.
 
+    When ``MODEL_REGISTRY_BACKEND`` and ``MODEL_REGISTRY_URI`` are both set,
+    the production version of ``MODEL_NAME`` is resolved from the registry and
+    its ``onnx_uri`` artifact is materialised into a temp directory before
+    adapter auto-detection runs. The legacy ``SM_MODEL_DIR`` path is unchanged
+    when those env vars are absent.
+
     Parameters
     ----------
     settings : Settings
@@ -179,6 +190,17 @@ def load_adapter(settings: Settings) -> BaseAdapter:
     BaseAdapter
         Instantiated inference adapter.
     """
+    # Lazy import mirrors the existing adapter pattern.
+    # Guards the optional ml_registry dep and avoids circular imports at module load.
+    # pylint: disable-next=import-outside-toplevel
+    from registry_pull import pull_model_from_registry  # noqa: I001
+
+    registry_dir = pull_model_from_registry(settings)
+    if registry_dir is not None:
+        # Shadow model_dir with the registry-pulled temp dir; all other fields
+        # remain unchanged so explicit MODEL_TYPE / MODEL_FILENAME still apply.
+        settings = settings.model_copy(update={"model_dir": registry_dir})
+
     explicit_model_type = _validated_model_type(settings)
     if explicit_model_type is not None:
         return _build_adapter_for(explicit_model_type, settings)

@@ -219,6 +219,10 @@ disable = [
     # C0413 (wrong-import-position): main.py places a lazy import after a
     # conditional check at module level; the ordering is intentional.
     "wrong-import-position",
+    # E0611 (no-name-in-module): fires when importing from onnx_serving_grpc
+    # because that package is in ignore-paths (generated stubs); callers cannot
+    # be told to use a different import path.
+    "no-name-in-module",
 ]
 
 [tool.coverage.run]

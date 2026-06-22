@@ -1,10 +1,5 @@
 """Gunicorn runtime configuration derived from environment settings."""
 
-# pylint: disable=invalid-name
-# scan-fix(pylint:C0103): gunicorn config variables follow gunicorn's own naming
-# convention (lowercase module globals like `bind`, `workers`, `errorlog`) — they
-# are not Python constants and UPPER_CASE would break gunicorn's config loader.
-
 from config import Settings
 
 settings = Settings()

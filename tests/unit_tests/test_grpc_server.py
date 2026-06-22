@@ -56,9 +56,7 @@ def test_set_grpc_error_handles_none_context() -> None:
     """No-op when context is None."""
     import onnx_model_serving.grpc.server as module
 
-    module._set_grpc_error(  # pylint: disable=protected-access  # scan-fix(pylint:W0212): direct unit test of private helper; no public wrapper exists
-        None, grpc_StatusCode.INTERNAL, "boom"
-    )
+    module._set_grpc_error(None, grpc_StatusCode.INTERNAL, "boom")
 
 
 def test_set_grpc_error_sets_code_and_details() -> None:
@@ -66,9 +64,7 @@ def test_set_grpc_error_sets_code_and_details() -> None:
     import onnx_model_serving.grpc.server as module
 
     context = _ContextRecorder()
-    module._set_grpc_error(  # pylint: disable=protected-access  # scan-fix(pylint:W0212): direct unit test of private helper; no public wrapper exists
-        context, grpc_StatusCode.INVALID_ARGUMENT, "bad"
-    )
+    module._set_grpc_error(context, grpc_StatusCode.INVALID_ARGUMENT, "bad")
     assert context.code == grpc_StatusCode.INVALID_ARGUMENT
     assert context.details == "bad"
 

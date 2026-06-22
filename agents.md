@@ -263,7 +263,70 @@ Before finalizing changes:
 
 ---
 
-# 14. Philosophy
+# 14. Registry-backed Startup
+
+The serving process supports resolving model artifacts from `ffreis-ml-registry`
+at startup. This is an optional extension — the legacy `SM_MODEL_DIR` path is
+unchanged when the registry env vars are absent.
+
+## Env vars
+
+| Variable                  | Required | Description                                                          |
+|---------------------------|----------|----------------------------------------------------------------------|
+| `MODEL_REGISTRY_BACKEND`  | together | Backend key: `sqlite`, `local` (alias), `dynamodb`, `postgres`.     |
+| `MODEL_REGISTRY_URI`      | together | Connection string/path for the backend (see table below).            |
+| `MODEL_NAME`              | yes      | Logical model name to resolve (must have a `production`-stage version). |
+
+`MODEL_REGISTRY_BACKEND` and `MODEL_REGISTRY_URI` must be set together or not at all.
+
+## URI semantics per backend
+
+| Backend     | URI format                                      |
+|-------------|------------------------------------------------|
+| `sqlite`    | Absolute path to SQLite file, e.g. `/models/registry.db` |
+| `dynamodb`  | DynamoDB table name, e.g. `ml-model-registry`  |
+| `postgres`  | DSN string, e.g. `postgresql://user:pw@host/db` |
+
+## `onnx_uri` artifact semantics
+
+The `onnx_uri` field on the registered `ModelVersion` is the artifact address:
+
+- Bare local path (`/opt/ml/models/iris.onnx`) — copied into a temp dir.
+- `file://` URI — stripped and treated as a local path.
+- `s3://` — reserved; raises `NotImplementedError` (future extension).
+
+## Optional dependency
+
+Install the registry extra before using registry-backed startup:
+
+```bash
+uv sync --extra registry
+```
+
+The `ml_registry` import is guarded behind `try/except ImportError` with a
+clear error message if the package is not installed.
+
+## Example
+
+```bash
+MODEL_REGISTRY_BACKEND=sqlite \
+MODEL_REGISTRY_URI=/opt/ml/registry.db \
+MODEL_NAME=my-classifier \
+MODEL_TYPE=onnx \
+uv run python main.py
+```
+
+## Implementation files
+
+- `src/registry_pull.py` — resolution + materialisation logic (no IO in core).
+- `src/config.py` — `model_registry_backend`, `model_registry_uri`, `model_name` fields.
+- `src/base_adapter.py` — `load_adapter` calls `pull_model_from_registry` before
+  adapter auto-detection; shadows `model_dir` with the registry-pulled temp dir.
+- `tests/integration_tests/test_registry_pull.py` — integration + error-path tests.
+
+---
+
+# 15. Philosophy
 
 This repository values:
 

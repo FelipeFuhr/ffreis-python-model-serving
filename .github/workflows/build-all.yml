@@ -53,6 +53,12 @@ jobs:
       # silently restores the 10x drain on every run (CI cost incident 2026-06).
         os: ${{ fromJson( (github.event_name == 'workflow_dispatch' && inputs.build_macos) && '["ubuntu-latest","macos-latest"]' || '["ubuntu-latest"]' ) }}
 
+    # scan-fix(uv:path-sources-ci): UV_FROZEN=1 prevents uv from re-resolving
+    # the lock file on every `uv run` call. Path-type sources (ffreis-ml-registry
+    # sibling checkout) are not available in CI; --frozen uses the existing venv
+    # that make build-local populates via `uv sync --frozen --extra dev`.
+    env:
+      UV_FROZEN: "1"
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4

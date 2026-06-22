@@ -102,3 +102,12 @@ repos:
     rev: 3.0.0
     hooks:
       - id: shellcheck
+
+  - repo: https://github.com/pylint-dev/pylint
+    rev: v4.0.5
+    hooks:
+      - id: pylint
+        # E0401 (import-error) fires for all packages when pylint runs outside
+        # the project venv (pre-commit default). Disable it here; mypy in system
+        # mode (via local hook above) provides real import checking with the venv.
+        args: ["--disable=import-error"]

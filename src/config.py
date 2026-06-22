@@ -85,7 +85,9 @@ def _env_str(name: str, default: str) -> str:
     return default if value is None else value
 
 
-class Settings(BaseModel):
+class Settings(BaseModel):  # pylint: disable=too-few-public-methods
+    # Settings inherits all public methods from pydantic.BaseModel; pylint
+    # running outside the venv cannot see inherited methods.
     """Runtime settings loaded from environment variables."""
 
     model_config = ConfigDict(frozen=True)
@@ -113,6 +115,14 @@ class Settings(BaseModel):
     model_filename: str = Field(
         default_factory=lambda: _env_str("MODEL_FILENAME", "").strip()
     )
+
+    model_registry_backend: str = Field(
+        default_factory=lambda: _env_str("MODEL_REGISTRY_BACKEND", "").strip().lower()
+    )
+    model_registry_uri: str = Field(
+        default_factory=lambda: _env_str("MODEL_REGISTRY_URI", "").strip()
+    )
+    model_name: str = Field(default_factory=lambda: _env_str("MODEL_NAME", "").strip())
 
     input_mode: str = Field(
         default_factory=lambda: _env_str("INPUT_MODE", "tabular").strip().lower()

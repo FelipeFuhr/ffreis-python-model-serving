@@ -42,6 +42,11 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
+    # scan-fix(uv:path-sources-ci): UV_FROZEN=1 prevents re-resolution on each
+    # `uv run` call; path-type sources (ffreis-ml-registry) are not present in
+    # CI. make build-local installs the venv via `uv sync --frozen --extra dev`.
+    env:
+      UV_FROZEN: "1"
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4

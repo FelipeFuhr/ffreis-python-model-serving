@@ -35,6 +35,8 @@ from __future__ import annotations
 
 import shutil
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as futures_TimeoutError
 from logging import getLogger as logging_getLogger
 from pathlib import Path
 from typing import Protocol, cast
@@ -154,8 +156,8 @@ def _open_registry(backend: str, uri: str) -> _RegistryLike:
     raise RuntimeError(f"Unhandled backend: {backend!r}")  # pragma: no cover
 
 
-def _resolve_onnx_uri(registry: _RegistryLike, model_name: str) -> str:
-    """Resolve the ``onnx_uri`` for the production version of ``model_name``.
+def _resolve_onnx_uri(registry: _RegistryLike, model_name: str, stage: str) -> str:
+    """Resolve the ``onnx_uri`` for the requested stage of ``model_name``.
 
     Parameters
     ----------
@@ -163,16 +165,19 @@ def _resolve_onnx_uri(registry: _RegistryLike, model_name: str) -> str:
         A ``ModelRegistry``-shaped adapter.
     model_name : str
         The logical model name to resolve.
+    stage : str
+        Stage name to resolve (e.g. ``"production"``, ``"staging"``).
 
     Returns
     -------
     str
-        The ``onnx_uri`` stored in the production ``ModelVersion``.
+        The ``onnx_uri`` stored in the target ``ModelVersion``.
 
     Raises
     ------
     RuntimeError
-        When no production version exists, or the version has no ``onnx_uri``.
+        When no version at the requested stage exists, or the version has no
+        ``onnx_uri``, or the stage value is not recognised by the registry.
     """
     # Lazy import: guards the optional ml_registry dep.
     # pylint: disable-next=import-outside-toplevel
@@ -182,18 +187,27 @@ def _resolve_onnx_uri(registry: _RegistryLike, model_name: str) -> str:
     from ml_registry.ports.model_registry import ModelVersionNotFoundError  # noqa: I001
 
     try:
-        resolved = registry.resolve(model_name, stage=Stage.PRODUCTION)
+        resolved_stage = Stage(stage)
+    except ValueError as exc:
+        valid = [s.value for s in Stage]
+        raise RuntimeError(
+            f"MODEL_STAGE={stage!r} is not a valid stage. Valid values: {valid}"
+        ) from exc
+
+    try:
+        resolved = registry.resolve(model_name, stage=resolved_stage)
     except ModelVersionNotFoundError as exc:
         raise RuntimeError(
-            f"No production version found for MODEL_NAME={model_name!r} in registry. "
-            "Promote a version to 'production' before starting the serving process."
+            f"No version at stage={stage!r} found for MODEL_NAME={model_name!r} in "
+            "registry. Promote a version to the target stage before starting the "
+            "serving process."
         ) from exc
 
     onnx_uri: str | None = resolved.onnx_uri
     if not onnx_uri:
         raise RuntimeError(
-            f"Production version of {model_name!r} has no onnx_uri. "
-            "Register the ONNX artifact path before promoting to production."
+            f"Version of {model_name!r} at stage={stage!r} has no onnx_uri. "
+            "Register the ONNX artifact path before promoting to that stage."
         )
     return onnx_uri
 
@@ -247,6 +261,36 @@ def _materialize_artifact(onnx_uri: str, dest_dir: Path) -> Path:
     )
 
 
+def _pull_model_inner(backend: str, uri: str, model_name: str, stage: str) -> str:
+    """Resolve and materialise the model artifact; called inside the timeout wrapper.
+
+    Parameters
+    ----------
+    backend : str
+        Registry backend key.
+    uri : str
+        Connection string or path for the backend.
+    model_name : str
+        Logical model name.
+    stage : str
+        Stage name to resolve.
+
+    Returns
+    -------
+    str
+        Temp directory path containing the pulled artifact.
+    """
+    registry = _open_registry(backend, uri)
+    try:
+        onnx_uri = _resolve_onnx_uri(registry, model_name, stage)
+        temp_dir = Path(tempfile.mkdtemp(prefix="byoc-registry-"))
+        artifact_path = _materialize_artifact(onnx_uri, temp_dir)
+        log.info("registry-pull: artifact materialised at %s", artifact_path)
+        return str(temp_dir)
+    finally:
+        registry.close()
+
+
 def pull_model_from_registry(settings: Settings) -> str | None:
     """Resolve and materialise a registry-backed model artifact at startup.
 
@@ -255,10 +299,14 @@ def pull_model_from_registry(settings: Settings) -> str | None:
 
     1. Validates that ``MODEL_NAME`` is also set.
     2. Opens the configured backend.
-    3. Resolves the production ``ModelVersion`` for that name.
+    3. Resolves the ``ModelVersion`` for ``MODEL_NAME`` at ``MODEL_STAGE``.
     4. Copies the ``onnx_uri`` artifact into a fresh ``tempfile.mkdtemp`` dir.
     5. Returns the temp dir path so the caller can set it as the effective
        ``model_dir`` passed into the adapter factory.
+
+    The entire pull operation is bounded by ``MODEL_REGISTRY_TIMEOUT`` seconds
+    (default 30). A timeout causes a fast-fail ``RuntimeError`` so the process
+    exits non-zero rather than hanging indefinitely.
 
     When the registry env vars are absent the function returns ``None`` and the
     caller continues with the legacy ``SM_MODEL_DIR`` path unchanged.
@@ -277,7 +325,7 @@ def pull_model_from_registry(settings: Settings) -> str | None:
     Raises
     ------
     RuntimeError
-        On any configuration, resolution, or materialisation failure.
+        On any configuration, resolution, materialisation, or timeout failure.
     """
     backend = settings.model_registry_backend
     uri = settings.model_registry_uri
@@ -300,19 +348,25 @@ def pull_model_from_registry(settings: Settings) -> str | None:
 
     _require_ml_registry()
 
+    stage = settings.model_stage
+    timeout = settings.model_registry_timeout
+
     log.info(
-        "registry-pull: resolving backend=%s uri=%s model_name=%s stage=production",
+        "registry-pull: resolving backend=%s uri=%s model_name=%s stage=%s timeout=%ds",
         backend,
         uri,
         model_name,
+        stage,
+        timeout,
     )
 
-    registry = _open_registry(backend, uri)
-    try:
-        onnx_uri = _resolve_onnx_uri(registry, model_name)
-        temp_dir = Path(tempfile.mkdtemp(prefix="byoc-registry-"))
-        artifact_path = _materialize_artifact(onnx_uri, temp_dir)
-        log.info("registry-pull: artifact materialised at %s", artifact_path)
-        return str(temp_dir)
-    finally:
-        registry.close()
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(_pull_model_inner, backend, uri, model_name, stage)
+        try:
+            return future.result(timeout=timeout)
+        except futures_TimeoutError as exc:
+            raise RuntimeError(
+                f"Registry pull timed out after {timeout}s "
+                f"(MODEL_REGISTRY_TIMEOUT={timeout}). "
+                "Check that the registry backend is reachable."
+            ) from exc

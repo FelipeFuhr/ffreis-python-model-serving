@@ -64,18 +64,11 @@ torch = [
 tensorflow = [
     "tensorflow>=2.19.0",
 ]
-registry = [
-    "ml_registry>=0.1.0",
-]
-
-[tool.uv.sources]
-# ffreis-ml-registry is unpublished; resolve the optional extra from the sibling
-# checkout. The default install does not require this group, so the serving
-# container can be built without the sibling repo present.
-# NOTE: path is relative to the canonical checkout location. When working from a
-# git worktree at a different path, uv resolves this against the project root
-# in the workspace (where pyproject.toml lives), not the worktree CWD.
-ml_registry = { path = "../ffreis-ml-registry", editable = true }
+registry = []
+# ffreis-ml-registry is unpublished and not on PyPI. Install manually for local dev:
+#   uv pip install -e ../ffreis-ml-registry
+# The serving container imports ml_registry lazily (guarded by try/except) so the
+# base install works without it; the [registry] extra is a no-op marker extra.
 
 [build-system]
 requires = ["hatchling"]

@@ -123,6 +123,12 @@ class Settings(BaseModel):  # pylint: disable=too-few-public-methods
         default_factory=lambda: _env_str("MODEL_REGISTRY_URI", "").strip()
     )
     model_name: str = Field(default_factory=lambda: _env_str("MODEL_NAME", "").strip())
+    model_stage: str = Field(
+        default_factory=lambda: _env_str("MODEL_STAGE", "production").strip().lower()
+    )
+    model_registry_timeout: int = Field(
+        default_factory=lambda: _env_int("MODEL_REGISTRY_TIMEOUT", 30)
+    )
 
     input_mode: str = Field(
         default_factory=lambda: _env_str("INPUT_MODE", "tabular").strip().lower()

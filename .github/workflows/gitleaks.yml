@@ -22,7 +22,7 @@ jobs:
       contents: read
       actions: read
       security-events: write
-    uses: FelipeFuhr/ffreis-workflows-general/.github/workflows/general-gitleaks.yml@6c0f6ec2fa4d3f83f2be03142b101b9e71e158b4
+    uses: ffreis-org/ffreis-workflows-general/.github/workflows/general-gitleaks.yml@6c0f6ec2fa4d3f83f2be03142b101b9e71e158b4
     with:
       working-directory: "."
       scan-history: true

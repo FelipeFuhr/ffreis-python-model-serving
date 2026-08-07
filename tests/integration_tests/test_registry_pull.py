@@ -353,7 +353,7 @@ def test_resolve_onnx_uri_raises_when_no_production_version() -> None:
     )
     # Stage is NONE (default) — not promoted to production.
     with pytest.raises(RuntimeError, match="No production version"):
-        _resolve_onnx_uri(registry, "mymodel")
+        _resolve_onnx_uri(registry, "mymodel", Stage.PRODUCTION)
     registry.close()
 
 
@@ -371,7 +371,7 @@ def test_resolve_onnx_uri_raises_when_onnx_uri_is_missing() -> None:
     )
     registry.promote(name="mymodel", version=version.version, stage=Stage.PRODUCTION)
     with pytest.raises(RuntimeError, match="no onnx_uri"):
-        _resolve_onnx_uri(registry, "mymodel")
+        _resolve_onnx_uri(registry, "mymodel", Stage.PRODUCTION)
     registry.close()
 
 

@@ -29,7 +29,7 @@ jobs:
     if: ${{ !github.event.pull_request.draft && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
     permissions:
       contents: read
-    uses: FelipeFuhr/ffreis-workflows-python/.github/workflows/python-sonar.yml@e05d6dd81831750853e8f325f2d43574c1c2a7a2 # main
+    uses: FelipeFuhr/ffreis-workflows-python/.github/workflows/python-sonar.yml@8405bfc6e887b6e1af634a6ed104538ab98d3baf # main (post-#98)
     with:
       working-directory: "."
       python-version: "3.13"

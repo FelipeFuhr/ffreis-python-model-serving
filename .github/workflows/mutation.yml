@@ -1,0 +1,50 @@
+name: Mutation Testing (mutmut)
+
+# Reusable python-mutation.yml calls `mutmut run --paths-to-mutate src` against
+# the full test suite per mutant — expensive (minutes per repo), so this does
+# NOT run on every PR; only on manual dispatch, direct pushes to main, and a
+# monthly schedule. See threshold rationale below.
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - "src/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/mutation.yml"
+  schedule:
+    - cron: "42 3 14 * *"  # monthly scattered
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mutation:
+    permissions:
+      contents: read
+    uses: FelipeFuhr/ffreis-workflows-python/.github/workflows/python-mutation.yml@8405bfc6e887b6e1af634a6ed104538ab98d3baf # main (post-#98)
+    with:
+      python-version: "3.13"
+      uv-extras: "dev grpc"
+      paths-to-mutate: "src"
+      # src/onnx_serving_grpc (generated stubs) and src/value_types.py (PEP 695
+      # `type X = ...` aliases parso can't parse) are excluded via
+      # [tool.mutmut] paths_to_exclude in pyproject.toml — mutmut reads that
+      # config file directly, so no paths-to-exclude passthrough input is
+      # needed on this reusable workflow.
+      # Conservative starting gate, not a measured full-repo score: a full
+      # `mutmut run` takes tens of minutes locally (out of scope for this PR's
+      # validation budget per the reusable workflow's own guidance that this
+      # is a scheduled/dispatch-only job, not a per-PR one). A bounded local
+      # sample against a well-covered module (src/parsed_types.py, 90% branch
+      # coverage) scored 55% (10 killed / 18 mutants); known lower-coverage
+      # modules (src/registry_pull.py at 39%, src/base_adapter.py at 77%)
+      # will pull the whole-repo score below that sample. 50 avoids an
+      # immediate failing first scheduled run; ratchet up as coverage on
+      # those modules improves.
+      threshold: 50

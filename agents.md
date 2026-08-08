@@ -326,7 +326,39 @@ uv run python main.py
 
 ---
 
-# 15. Philosophy
+# 15. Mutation Testing (mutmut) Gotchas
+
+`pyproject.toml` pins `mutmut>=2.4,<3` (v3 dropped `--paths-to-mutate`, which
+`.github/workflows/mutation.yml` and `make mutation` both invoke; an unpinned
+`>=2.0.0`-style range silently resolves to 3.x). Two Python-3.13-specific traps
+found while wiring this up — both reproduced locally, neither is code-quality
+work needed on this repo, just tool-compat awareness:
+
+- **`src/value_types.py` is excluded from mutation scanning** via
+  `[tool.mutmut] paths_to_exclude` in `pyproject.toml`. It uses PEP 695
+  `type X = ...` alias statements; mutmut's parser (`parso` 0.8.7) cannot parse
+  that syntax yet and aborts the *entire* run with "Failed while creating
+  mutations" if the file is in scope. Pure type aliases have no runtime
+  behavior to mutate anyway, so excluding it costs nothing. If a future
+  `parso`/`mutmut` release adds PEP 695 support, this exclusion can be dropped.
+- **`mutmut results` and `mutmut html` crash** under Python 3.13 + mutmut 2.5.1
+  (`TypeError: 'QueryResultIterator' object is not iterable` — a Pony ORM
+  0.7.19 incompatibility in `Mutant.select()`). `mutmut run` itself is
+  unaffected (writes results straight to the `.mutmut-cache` SQLite file). Both
+  `make mutation` and the CI gate (`python-mutation.yml` in
+  `ffreis-workflows-python`) read the score directly from that SQLite file
+  instead of calling the broken CLI commands — do not "fix" this by switching
+  back to `mutmut results` without re-testing on the pinned Python version.
+- **If you find `.mutmut-cache` or a `*.bak` file next to a source file with an
+  unexplained diff**, it's a mutation left applied from an interrupted
+  `mutmut run` (e.g. a killed/timed-out process caught mid-mutant, before it
+  restored the original). Restore from `.bak`, delete both, and diff against
+  `git show HEAD:<path>` to confirm a clean restore before trusting local test
+  results.
+
+---
+
+# 16. Philosophy
 
 This repository values:
 

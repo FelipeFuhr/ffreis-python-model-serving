@@ -1,0 +1,14 @@
+remotes:
+  - git_url: https://github.com/FelipeFuhr/ffreis-platform-standards
+    ref: v1.10.0
+    configs:
+      - lefthook/base.yml
+      - lefthook/python.yml
+
+pre-push:
+  parallel: false
+  commands:
+    lint:
+      run: make lint
+    test:
+      run: make test

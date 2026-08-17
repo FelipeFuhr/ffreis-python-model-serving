@@ -32,6 +32,10 @@ dev = [
     "opentelemetry-instrumentation-logging>=0.48b0",
     "opentelemetry-instrumentation-requests>=0.48b0",
     "pytest-cov>=5.0.0",
+    # v3 dropped --paths-to-mutate/--tests-dir, which python-mutation.yml
+    # still invokes — pin below v3. Unpinned/>=2.0.0-style ranges silently
+    # resolve to 3.x (confirmed on ffreis-python-onnx-model-converter).
+    "mutmut>=2.4,<3",
     "black>=26.3.1",
     "ruff>=0.6.0",
     "mypy>=1.11.0",
@@ -229,3 +233,21 @@ omit = ["src/onnx_serving_grpc/*"]
 show_missing = true
 skip_covered = true
 fail_under = 85
+
+[tool.mutmut]
+# mutmut reads [tool.mutmut] as CLI-flag defaults (config_from_file in
+# mutmut/__init__.py), so this applies even though python-mutation.yml (the
+# fleet-shared reusable workflow) only ever passes --paths-to-mutate, never
+# --paths-to-exclude — no upstream change to the workflow is needed.
+#
+# src/onnx_serving_grpc: generated pb2/pb2_grpc stubs (gitignored, regenerated
+# by scripts/generate_grpc_stubs.sh); already excluded from coverage/ruff/mypy
+# for the same reason — not authored code.
+#
+# src/value_types.py: uses PEP 695 `type X = ...` alias statements. mutmut's
+# parser (parso 0.8.7) does not yet support this Python 3.12+ syntax and
+# raises "Failed while creating mutations" for the whole run if this file is
+# in scope — confirmed locally (parso.load_grammar().iter_errors() reports a
+# syntax error on every `type` statement in the file). The file is pure type
+# aliases with no runtime behavior to mutate, so excluding it costs nothing.
+paths_to_exclude = "src/onnx_serving_grpc,src/value_types.py"

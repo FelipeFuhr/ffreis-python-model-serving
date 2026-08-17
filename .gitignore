@@ -47,6 +47,7 @@ src/onnx_serving_grpc/*_pb2_grpc.py
 coverage.xml
 coverage-*.xml
 htmlcov/
+.mutmut-cache
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/

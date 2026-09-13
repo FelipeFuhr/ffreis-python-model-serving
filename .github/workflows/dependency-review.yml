@@ -21,7 +21,14 @@ concurrency:
 
 jobs:
   dependency-review:
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+    # scan-fix(dependency-review:unsupported-on-private): added the
+    # `repository.private == false` clause. The Dependency Review API requires
+    # GitHub Advanced Security on private repositories, which this fleet does
+    # not have, so the job failed with "Dependency review is not supported on
+    # this repository" on EVERY run -- a permanently-red check that never
+    # reviewed anything. Same reasoning as the fleet-wide `upload-sarif: false`
+    # convention for security scanners. Skipping is honest; a red no-op is not.
+    if: ${{ github.event.repository.private == false && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

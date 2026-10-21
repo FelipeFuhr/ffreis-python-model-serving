@@ -8,6 +8,8 @@ name: Mutation Testing (mutmut)
 permissions: {}
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
   push:
     branches: [ main ]
@@ -25,10 +27,12 @@ concurrency:
 
 jobs:
   mutation:
+    if: ${{ github.event_name != 'pull_request' }}
     permissions:
       contents: read
-    uses: FelipeFuhr/ffreis-workflows-python/.github/workflows/python-mutation.yml@8405bfc6e887b6e1af634a6ed104538ab98d3baf # main (post-#98)
+    uses: FelipeFuhr/ffreis-workflows-python/.github/workflows/python-mutation.yml@6c507728c6d3dc346cbeb1fe19df72de018bd5b4 # v1.7.0
     with:
+      runner: '["ubuntu-latest"]'
       python-version: "3.13"
       uv-extras: "dev grpc"
       paths-to-mutate: "src"
@@ -47,4 +51,16 @@ jobs:
       # will pull the whole-repo score below that sample. 50 avoids an
       # immediate failing first scheduled run; ratchet up as coverage on
       # those modules improves.
+      threshold: 50
+  mutation-incremental:
+    if: ${{ github.event_name == 'pull_request' }}
+    permissions:
+      contents: read
+    uses: FelipeFuhr/ffreis-workflows-python/.github/workflows/python-mutation.yml@6c507728c6d3dc346cbeb1fe19df72de018bd5b4 # v1.7.0
+    with:
+      in-diff: true
+      runner: '["ubuntu-latest"]'
+      python-version: "3.13"
+      uv-extras: "dev grpc"
+      paths-to-mutate: "src"
       threshold: 50
